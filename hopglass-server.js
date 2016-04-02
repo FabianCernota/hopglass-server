@@ -19,6 +19,7 @@ if (argv.config)
       argv = JSON.parse(res)
   })
 
+var sitecode = argv.sitecode ? argv.sitecode : ''
 var nodeinfoInterval = argv.nodeinfoInterval ? argv.nodeinfoInterval : 180
 var statisticsInterval = argv.statisticsInterval ? argv.statisticsInterval : 60
 var collectorport = argv.collectorport ? argv.collectorport : 45123
@@ -61,12 +62,14 @@ collector.on('listening', () => {
 })
 
 collector.on('message', (msg, rinfo) => {
+  console.log("Found Node");
   zlib.inflateRaw(msg, (err,res) => {
     if (err) {
       console.log('ERR: ' + err)
     } else {
       var obj = JSON.parse(res)
       var id
+
       if (obj.nodeinfo) {
         id = obj.nodeinfo.node_id
       } else if (obj.statistics) {
@@ -88,8 +91,14 @@ collector.on('message', (msg, rinfo) => {
         raw[id].neighbours = obj.neighbours
       raw[id].lastseen = new Date().toISOString()
       if (obj.statistics || obj.neighbours && !raw[id].nodeinfo) {
-        retrieve('nodeinfo', rinfo.address)
+	if(sitecode == '' || raw[id].nodeinfo.system.site_code == sitecode){
+	  console.log("ja");
+          retrieve('nodeinfo', rinfo.address)
+        }else{
+	  console.log("nein");
+	}
       }
+
     }
   })
 })
